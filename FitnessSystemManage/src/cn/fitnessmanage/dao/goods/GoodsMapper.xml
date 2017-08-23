@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.goods.GoodsMapper">
+
+	<!--返回商品类型集合 -->
+	<select id="getGoodsTypeList" resultType="GoodsType">
+		SELECT
+		goodsTypeId,
+		goodsTypeName
+		FROM
+		fitnesssystem.goodstype
+		LIMIT #{form}, #{pageSize};
+	</select>
+
+	<!--返回商品类型记录总数 -->
+	<select id="getGoodsTypeCount" resultType="int">
+		SELECT
+		COUNT(*)
+		FROM
+		fitnesssystem.goodstype
+	</select>
+
+	<!--添加商品 -->
+	<insert id="addGoods">
+		INSERT INTO fitnesssystem.goods (
+		goodsId,
+		goodsName,
+		goodsTypeId,
+		goodsPrice,
+		goodsCount,
+		goodsUnit,
+		common
+		)
+		VALUES
+		(
+		#{goodsId},
+		#{goodsName},
+		#{goodsTypeId},
+		#{goodsPrice},
+		#{goodsCount},
+		#{goodsUnit},
+		#{common}
+		);
+	</insert>
+
+	<!-- 返回商品最大的编号 -->
+	<select id="getGoodsMaxId" resultType="int">
+		SELECT
+		MAX(goodsId)
+		FROM
+		fitnesssystem.goods
+	</select>
+
+	<!--返回商品集合 -->
+	<select id="getGoodsList" resultType="Goods">
+		SELECT
+		goodsId,
+		goodsName,
+		(SELECT a.goodsTypename FROM goodsType a WHERE a.goodsTypeId=g.goodsTypeId)
+		AS goodsTypename,
+		goodsTypeId,
+		goodsPrice,
+		goodsCount,
+		goodsUnit,
+		common
+		FROM
+		fitnesssystem.goods g
+
+		<where>
+			<if test="goodsId!=null and goodsId!= '' ">
+				goodsId=#{goodsId}
+			</if>
+			<if test="goodsName!=null and goodsName!= '' ">
+				and goodsName like CONCAT(CONCAT('%', #{goodsName}), '%')
+			</if>
+			<if test="goodsTypeId!=null and goodsTypeId!= '' ">
+				and g.goodsTypeId=#{goodsTypeId}
+			</if>
+		</where>
+		LIMIT #{form}, #{pageSize};
+
+	</select>
+
+	<!--返回商品记录总数 -->
+	<select id="getGoodsCount" resultType="int">
+		SELECT
+		COUNT(*)
+		FROM
+		fitnesssystem.goods
+
+	</select>
+
+	<!--根据商品编号删除商品 -->
+	<delete id="deleteGoods">
+		DELETE
+		FROM
+		fitnesssystem.goods
+		WHERE goodsId=#{goodsId}
+	</delete>
+
+	<!--修改商品信息 -->
+	<update id="updateGoods">
+		UPDATE
+		fitnesssystem.goods
+		SET
+		goodsName = #{goodsName},
+		goodsTypeId = #{goodsTypeId},
+		goodsPrice = #{goodsPrice},
+		goodsCount =
+		#{goodsCount},
+		goodsUnit = #{goodsUnit},
+		common = #{common}
+		WHERE goodsId
+		= #{goodsId};
+	</update>
+
+	<!--添加商品类型 -->
+	<insert id="addGoodsType">
+		INSERT INTO fitnesssystem.goodstype ( goodsTypeName)
+		VALUES
+		( #{goodsTypeName});
+	</insert>
+
+	<!--修改商品类型 -->
+	<update id="updateGoodsType">
+		UPDATE
+		fitnesssystem.goodstype
+		SET
+		goodsTypeName =
+		#{goodsTypeName}
+		WHERE goodsTypeId = #{goodsTypeId};
+	</update>
+
+	<!--删除商品类型 -->
+	<delete id="deleteGoodsType">
+		DELETE
+		FROM
+		fitnesssystem.goodstype
+		WHERE goodsTypeId =
+		#{goodsTypeId};
+	</delete>
+
+
+	<select id="getGoodsMoneyList" resultType="GoodsOrder">
+		SELECT
+		DATE_FORMAT(a.date,"%Y-%m-%d") as date,
+		SUM((SELECT goodsPrice FROM goods g WHERE
+		g.goodsId=a.goodsId)*goodsSum)AS money
+		FROM GoodsOrder a
+		<where>
+			<if test="date1!=null and date1!= '' ">
+				a.date>#{date1}
+			</if>
+			<if test="date2!=null and date2!= '' ">
+				and #{date2}>a.date
+			</if>
+		</where>
+		GROUP BY DATE_FORMAT(a.date,"%Y-%m-%d")
+		LIMIT #{form}, #{pageSize};
+	</select>
+
+
+	<select id="getGoodsMoneyCount" resultType="GoodsOrder">
+		SELECT
+		DATE
+		FROM GoodsOrder
+		<where>
+			<if test="date1!=null and date1!= '' ">
+				date>#{date1}
+			</if>
+			<if test="date2!=null and date2!= '' ">
+				and #{date2}>date
+			</if>
+		</where>
+		GROUP BY DATE_FORMAT(date,"%Y-%m-%d")
+	</select>
+
+	<select id="getGoodsOrderList" resultType="goods">
+		SELECT b.*,(a.goodsSum*b.goodsPrice) money,a.goodsSum,
+			(SELECT c.goodsTypename FROM goodsType c WHERE c.goodsTypeId=b.goodsTypeId) as goodsTypename
+		FROM
+			 goodsOrder a,goods b
+		WHERE
+			a.goodsId=b.goodsId
+		AND
+			DATE_FORMAT(DATE,"%Y-%m-%d") = DATE_FORMAT(#{date},"%Y-%m-%d")
+		LIMIT #{form}, #{pageSize};	
+	</select>
+
+	<select id="getGoodsOrderCount" resultType="int">
+		SELECT COUNT(*) 
+		FROM 
+			goodsOrder a,goods b 
+		WHERE
+			a.goodsId=b.goodsId
+		AND
+			DATE_FORMAT(DATE,"%Y-%m-%d") = DATE_FORMAT(#{date},"%Y-%m-%d")
+	</select>
+	
+	<!--会员购买商品,添加商品订单-->
+	<insert id="addGoodsOrder">
+	 INSERT INTO fitnesssystem.goodsorder (
+	  membersId,
+	  employeesId,
+	  goodsId,
+	  goodsSum,
+	  date
+	 )
+	 VALUES
+	  (
+	    #{membersId}, 
+	    #{employeesId}, 
+	    #{goodsId}, 
+	    #{goodsSum}, 
+	    #{date}
+	  );
+	</insert>
+</mapper>

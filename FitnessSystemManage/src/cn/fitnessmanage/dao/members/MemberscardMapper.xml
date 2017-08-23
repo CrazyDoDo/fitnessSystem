@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.members.MemberscardMapper">
+
+	<select id="getMembersCardList" resultType="MembersCard">
+		SELECT
+		cardId,cardName,TYPE, price, DATE, discount, remark FROM
+		fitnesssystem.memberscard ORDER BY price DESC LIMIT #{form},
+		#{pageSize};
+	</select>
+
+	<!--返回会员卡数量 -->
+	<select id="getMembersCardCount" resultType="Int">
+		SELECT COUNT(*) AS
+		memcardSum FROM fitnesssystem.memberscard
+	</select>
+
+	<!--根据Id查找会员卡信息 -->
+	<select id="getSelectIdMembersCard" resultType="MembersCard">
+		SELECT
+		cardId,cardName,TYPE, price, DATE, discount, remark FROM
+		fitnesssystem.memberscard where cardId= #{cardId}
+	</select>
+
+	<!--插入会员卡信息-->
+	<insert id="addMembersCard">
+		INSERT INTO  fitnesssystem.memberscard  (cardName ,type,price ,date , discount ,remark)
+		 VALUES(#{cardName},#{type},#{price},#{date},#{discount},#{remark});
+	</insert>
+	
+	<!--修改会员卡信息-->
+	<update id="updateMembersCard">
+		UPDATE
+		   fitnesssystem.memberscard 
+		SET
+		   cardName  =#{cardName},
+		   type  = #{type},
+		   price  = #{price},
+		   date  = #{date},
+		   discount  = #{discount},
+		   remark  = #{remark}
+		WHERE  cardId  = #{cardId};	
+	</update>
+	
+	<!--删除会员卡-->
+	<delete id="deleteMembersCard">
+		DELETE
+		FROM
+		  fitnesssystem.memberscard
+		WHERE cardId = #{cardId};
+	
+	</delete>
+</mapper>

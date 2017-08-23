@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.employees.EmployeesMapper">
+	<!--查找所有 销售人员-->
+	<select id="getXiaoshouList" resultType="Employees">
+		SELECT * FROM fitnesssystem.employees WHERE  typeId=1 OR typeId=3 OR typeId=5 OR typeId=6
+	</select>
+	
+	<!--查找所有健身教练-->
+	<select id="getPersonalList" resultType="Employees">
+		SELECT a.* ,b.personalLever leverName,b.personalPrice  price FROM fitnesssystem.employees  a  INNER JOIN personallever b ON a.leverId=b.leverId  WHERE  typeId=4 OR typeId=7
+	</select>	
+
+	<update id="updateEmployees">
+		UPDATE
+		   fitnesssystem.employees 
+		SET
+		   name  = #{name} ,
+		   username  = #{username},
+		   password  = #{password},
+		   address  = #{address},
+		   phone  =  #{phone},
+		   sex  =  #{sex},
+		   ID  =  #{iD},
+		   dirthday  = #{dirthday} ,
+		   stratDate  = #{stratDate} ,
+		   leverId  = #{leverId} ,
+		   typeId  = #{typeId} ,
+		   fatherTypeId  = #{fatherTypeId} 
+		WHERE  employeesId  = #{employeesId};
+	</update>
+	
+	<delete id="deleteEmployees">
+		DELETE from fitnesssystem.employees where  employeesId  = #{employeesId}
+	</delete>
+	
+	<!--添加员工-->
+	<insert id="addEmployees">
+	INSERT 
+	INTO 
+		fitnesssystem.employees (
+		  employeesId,
+		  name,
+		  username,
+		  password,
+		  address,
+		  phone,
+		  sex,
+		  ID,
+		  dirthday,
+		  stratDate,
+		  leverId,
+		  typeId,
+		  fatherTypeId
+		)
+	VALUES
+		(
+		  	#{employeesId},
+		  	#{name},
+		  	#{username},
+		  	#{password},
+		  	#{address},
+		  	#{phone},
+		  	#{sex},
+		  	#{iD},
+		  	#{dirthday},
+		  	#{stratDate},
+		  	#{leverId},
+		  	#{typeId},
+		  	#{fatherTypeId}
+		  );
+	</insert>
+	
+	<!--返回所有员工-->
+	<select id="getEmployeesList" resultType="Employees">
+		SELECT
+		  employeesId,
+		  name,
+		  username,
+		  password,
+		  address,
+		  phone,
+		  sex,
+		  ID,
+		  dirthday,
+		  stratDate,
+		  leverId,
+		  typeId,
+		  fatherTypeId,
+		  (SELECT typeName FROM EmployeesType WHERE employeestype.employeesTypeId=employees.typeId ) typeName
+		FROM
+		  fitnesssystem.employees 
+		  <where>
+		  		<if test="employeesId!=null and employeesId != '' "> employeesId = #{employeesId}</if>
+		  		<if test="name!= null and name!= '' "> and name like CONCAT(CONCAT('%', #{name}), '%')</if>
+		  		<if test="typeId!=null and typeId!= '' "> and typeId = #{typeId}</if>
+		  </where>
+		LIMIT #{form}, #{pageSize};	
+	</select>
+	
+	<!--返回员工的总数-->
+	<select id="getEmployeesListCount" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+		  fitnesssystem.employees
+		  <where>
+		  		<if test="employeesId!=null and employeesId != '' "> employeesId = #{employeesId}</if>
+		  		<if test="name!= null and name!= '' "> and name like CONCAT(CONCAT('%', #{name}), '%')</if>
+		  		<if test="typeId!=null and typeId!= '' "> and typeId = #{typeId}</if>
+		  </where>
+	</select>
+	
+	
+	<!--返回员工类型-->
+	<select id="getEmployeesTypeList" resultType="EmployeesType">
+	SELECT
+	  employeesTypeId,
+	  fatheyTypeId,
+	  (SELECT b.typeName FROM employeesType b WHERE b.employeesTypeId=a.fatheyTypeId) AS fatheyName,
+	  typeName,
+	  price,
+	  common
+	FROM
+	  fitnesssystem.employeestype a
+	  <where>
+	  		<if test="typeName!=null and typeName!= '' ">
+	  			typeName like CONCAT(CONCAT('%', #{typeName}), '%') 
+	  		</if>
+	  </where>
+	LIMIT #{form}, #{pageSize};	
+	</select>
+	
+	<!--返回岗位记录总数-->
+	<select id="getEmployeesTypeCount" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+	  fitnesssystem.employeestype a
+	  <where>
+	  		<if test="typeName!=null and typeName!= '' ">
+	  			typeName like CONCAT(CONCAT('%', #{typeName}), '%') 
+	  		</if>
+	  </where>
+	</select>
+	
+	<!--返回最大的员工工号-->
+	<select id="getMaxEmployeesId" resultType="int">
+	SELECT
+		MAX(employeesId)	
+	FROM
+	  fitnesssystem.employees
+	</select>
+	
+	<!--添加操作日志-->
+	<insert id="addSystemLog">
+	INSERT INTO fitnesssystem.systemlog (
+	  employeesId,
+	  module,
+	  comment,
+	  date
+	)
+	VALUES
+	  (
+	  	#{employeesId},
+	  	#{module},
+	  	#{comment},
+	  	#{date}
+	  );
+	</insert>
+	
+	<!--删除岗位-->
+	<delete id="deleteEmployeesType">
+	DELETE
+	FROM
+	  fitnesssystem.employeestype
+	WHERE employeesTypeId = #{employeesTypeId};
+	
+	</delete>
+	
+	<!--添加岗位-->
+	<insert id="addEmployeesType">
+		<selectKey keyProperty="employeesTypeId" order="AFTER" resultType="java.lang.Integer">
+				select LAST_INSERT_ID()
+		</selectKey>
+	INSERT INTO fitnesssystem.employeestype (
+	  fatheyTypeId,
+	  typeName,
+	  price,
+	  common
+	)
+	VALUES
+	  (
+	  	 #{fatheyTypeId},
+	  	 #{typeName},
+	  	 #{price},
+	  	 #{common}
+	  );
+	</insert>
+	
+	<!--修改岗位-->
+	<update id="updateEmployeesType">
+	UPDATE
+	  fitnesssystem.employeestype
+	SET
+	  fatheyTypeId =  #{fatheyTypeId},
+	  typeName = #{typeName},
+	  price = #{price},
+	  common = #{common}
+	WHERE employeesTypeId = #{employeesTypeId};	
+	</update>
+
+	<!--删除岗位时删除权限表中的相关记录-->
+	<delete id="deletePermissions">
+	DELETE
+	FROM
+	  fitnesssystem.permissions
+	WHERE employeesTypeId = #{employeesTypeId};
+	</delete>
+	
+	<!--添加权限-->
+	<insert id="addPermissions">
+	INSERT INTO fitnesssystem.permissions (
+	  employeesTypeId,
+	  peizhi,
+	  kaika,
+	  caozuo,
+	  xinxi,
+	  huiyuanbiao,
+	  gaoji,
+	  yewu,
+	  kehu,
+	  xiaoshou,
+	  yeji,
+	  sijiao,
+	  sijiaoxinxi,
+	  sijiaojingli,
+	  sijiaobiao,
+	  caoke,
+	  yuyue,
+	  tuandui,
+	  chuwugui,
+	  shangpin,
+	  shuibayeji,
+	  yuangong,
+	  gangwei,
+	  rizhi
+	)
+	VALUES
+	  (	
+	  	#{employeesTypeId},
+	  	#{peizhi},
+	  	#{kaika},
+	  	#{caozuo},
+	  	#{xinxi},
+	  	#{huiyuanbiao},
+	  	#{gaoji},
+	  	#{yewu},
+	  	#{kehu},
+	  	#{xiaoshou},
+	  	#{yeji},
+	  	#{sijiao},
+	  	#{sijiaoxinxi},
+	  	#{sijiaojingli},
+	  	#{sijiaobiao},
+	  	#{caoke},
+	  	#{yuyue},
+	  	#{tuandui},
+	  	#{chuwugui},
+	  	#{shangpin},
+	  	#{shuibayeji},
+	  	#{yuangong},
+	  	#{gangwei},
+	  	#{rizhi}
+	  );
+	</insert>
+	
+	<!--修改权限-->
+	<update id="updatePermissions">
+	UPDATE
+	  fitnesssystem.permissions
+	SET
+	  peizhi = #{peizhi},
+	  kaika = #{kaika},
+	  caozuo = #{caozuo},
+	  xinxi = #{xinxi}, 
+	  huiyuanbiao = #{huiyuanbiao},
+	  gaoji = #{gaoji}, 
+	  yewu = #{yewu}, 
+	  kehu = #{kehu}, 
+	  xiaoshou = #{xiaoshou},
+	  yeji = #{yeji},
+	  sijiao = #{sijiao},
+	  sijiaoxinxi = #{sijiaoxinxi}, 
+	  sijiaojingli = #{sijiaojingli},
+	  sijiaobiao = #{sijiaobiao},
+	  caoke = #{caoke}, 
+	  yuyue = #{yuyue}, 
+	  tuandui = #{tuandui}, 
+	  chuwugui = #{chuwugui}, 
+	  shangpin = #{shangpin}, 
+	  shuibayeji = #{shuibayeji},
+	  yuangong = #{yuangong}, 
+	  gangwei = #{gangwei}, 
+	  rizhi = #{rizhi}
+	WHERE employeesTypeId = #{employeesTypeId};
+	</update>
+	
+	<!--根据岗位Id查找岗位信息-->
+	<select id="getEmployeesTypeInfo" resultType="EmployeesType">
+	SELECT
+	  employeesTypeId,
+	  fatheyTypeId,
+	  (SELECT b.typeName FROM employeesType b WHERE b.employeesTypeId=a.fatheyTypeId) AS fatheyName,
+	  typeName,
+	  price,
+	  common
+	FROM
+	  fitnesssystem.employeestype a
+	  <where>
+	  		<if test="employeesTypeId!=null and employeesTypeId!= '' ">
+	  			employeesTypeId=#{employeesTypeId}
+	  		</if>
+	  </where>
+	</select>
+	
+	<!--  -->
+	<select id="getSystemLogList" resultType="SystemLog">
+	SELECT
+	  systemLogId,
+	    (SELECT a.name FROM employees a WHERE a.employeesId= systemlog.employeesId) name,
+	  module,
+	  comment,
+	  date
+	FROM
+	  fitnesssystem.systemlog
+	  <where>
+	  		<if test="name !=null and name !='' ">employeesId IN (SELECT a.employeesId FROM employees a WHERE a.name like CONCAT(CONCAT('%', #{name}), '%') ) </if>
+	  		<if test="date1 !=null and date1 != '' "> and  date > #{date1}</if>
+	  		<if test="date2 !=null and date2 != '' ">  and #{date2} > date </if>
+	  </where>
+	LIMIT #{form}, #{pageSize};	
+	</select>
+	
+	
+	<!--  -->
+	<select id="getSystemLogCount" resultType="int">
+	SELECT
+		COUNT(*)
+	FROM
+	  fitnesssystem.systemlog
+	  <where>
+	  		<if test="name !=null and name !='' ">employeesId IN (SELECT a.employeesId FROM employees a WHERE a.name like CONCAT(CONCAT('%', #{name}), '%') )  </if>
+	  		<if test="date1 !=null and date1 != '' ">  and date > #{date1}</if>
+	  		<if test="date2 !=null and date2 != '' ">  and #{date2} > date </if>
+	  </where>
+	</select>
+</mapper>	

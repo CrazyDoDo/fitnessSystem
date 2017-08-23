@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.customer.CustomerMapper">
+
+	<!--添加访问客户-->
+	<insert id="addCustomer">
+	INSERT INTO  fitnesssystem.customer  (
+ 	  custName , sex , birthday ,phone ,
+  	  weChat ,email ,address ,startDate ,
+      professional ,souree ,state ,employeesId ,
+  	  comment 
+	)
+	VALUES
+ 	 (
+      #{custName} ,
+      #{sex} ,
+      #{birthday} ,
+      #{phone} ,
+      #{weChat} ,
+      #{email} ,
+      #{address} ,
+      #{startDate} ,
+      #{professional} ,
+      #{souree} ,
+      #{state} ,
+      #{employeesId} ,
+      #{comment} 
+  );
+	</insert>
+	<!--分页返回返回客户信息-->
+	<select id="getCustomerList" resultType="Customer">
+		SELECT
+		   a.customerId ,
+		   a.custName ,
+		   a.sex ,
+		   a.birthday ,
+		   a.phone ,
+		   a.weChat ,
+		   a.email ,
+		   a.address ,
+		   a.startDate ,
+		   a.professional ,
+		   a.souree ,
+		   a.state ,
+		   a.employeesId ,
+		   (SELECT NAME FROM employees AS b WHERE a.employeesId= b.employeesId)  AS emplName,
+		   a.comment 
+		FROM
+		   fitnesssystem.customer a where 1=1
+		   	<if test="custName!=null and custName != ''"> and a.custName=#{custName} </if>
+	   		<if test="date1 != null and date1 != '' "> and a.startDate > #{date1}</if>
+	   		<if test="date2 != null and date2 != '' "> and  #{date2} > a.startDate</if>
+	   		<if test="emplName!=null and emplName != ''"> and employeesId IN (SELECT employeesId FROM employees WHERE NAME=#{emplName})</if>
+	   		 order BY a.startDate DESC
+	   		 
+		LIMIT #{form}, #{pageSize};	
+	</select>
+	
+	<!--返回客户总记录数-->
+	<select id="getCustomerCount" resultType="int">
+		select count(*) from fitnesssystem.customer a where 1=1
+			<if test="custName!=null and custName != ''"> and a.custName=#{custName} </if>
+	   		<if test="date1 != null and date1 != '' "> and a.startDate > #{date1}</if>
+	   		<if test="date2 != null and date2 != '' "> and  #{date2} > a.startDate</if>
+	   		<if test="emplName!=null and emplName != ''"> and employeesId IN (SELECT employeesId FROM employees WHERE NAME=#{emplName})</if>
+	</select>
+	
+	<!--删除访问客户信息-->
+	<delete id="deleteCustomer">
+		delete from fitnesssystem.customer where customerId =#{customerId}	
+	</delete>
+	
+	<!--根据客户编号查找客户信息-->
+	<select id="getCustomerInfo" resultType="Customer">
+		SELECT
+		   a.customerId ,
+		   a.custName ,
+		   a.sex ,
+		   a.birthday ,
+		   a.phone ,
+		   a.weChat ,
+		   a.email ,
+		   a.address ,
+		   a.startDate ,
+		   a.professional ,
+		   a.souree ,
+		   a.state ,
+		   a.employeesId ,
+		   (SELECT NAME FROM employees AS b WHERE a.employeesId= b.employeesId)  AS emplName,
+		   a.comment 
+		FROM
+		   fitnesssystem.customer a where  a.customerId=#{customerId}		
+	</select>
+	
+	<!--修改客户信息-->
+	<update id="updateCustomerInfo" >
+		UPDATE
+		   fitnesssystem.customer 
+		SET
+		   custName  =  #{custName} ,
+		   sex  =  #{sex} ,
+		   birthday  = #{birthday} ,
+		   phone  =  #{phone} ,
+		   weChat  =  #{weChat} ,
+		   email  = #{email} ,
+		   address  =  #{address} ,
+		   startDate  = #{startDate} ,
+		   professional  = #{professional} ,
+		   souree  = #{souree} ,
+		   state  =  #{state} ,
+		   employeesId  =  #{employeesId} ,
+		   comment  =  #{comment} 
+		WHERE  customerId  = #{customerId};	
+	</update>
+	
+	<!--分页返回,销售人员的销售信息-->
+	<select id="selectXiaoShouEmpl" resultType="employees">
+			SELECT COUNT(customerId) AS sum,b.phone, 
+			a.employeesId,
+			b.name,
+			c.typeName
+		    FROM customer AS a  INNER JOIN employees AS b 
+		    ON a.employeesId=b.employeesId 
+		    INNER JOIN employeesType AS c 
+		    ON c.employeesTypeId=b.typeId
+		  <where>
+		  		<if test="emplName!=null and emplName!='' ">
+		  		b.name=#{emplName}
+		  		</if>
+		  		<if test="employeesId!=null and employeesId!='' ">
+		  		and  a.employeesId=#{employeesId}
+		  		</if>
+		  </where>
+		 GROUP BY a.employeesId,b.name,b.phone,c.typeName	
+		 LIMIT #{form}, #{pageSize};	
+	</select>
+</mapper>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.locker.LockerMapper">
+	<!-- 分页返回,会员的租柜信息-->
+	<select id="getLockerOrderList" resultType="LockerOrder">
+		SELECT
+		lockerOrderId,
+		lockerId ,
+		lockerway,
+		(SELECT lockerType FROM locker l WHERE l.lockerId=a.lockerId) AS lockerType ,
+		startDate ,
+		overDate ,
+		(SELECT e.name FROM employees e WHERE e.employeesId=a.employeesId) AS employeesName,
+		(SELECT m.name FROM members m WHERE m.membersId=a.membersId) AS membersName,
+		a.membersId
+		FROM
+		fitnesssystem.lockerorder a 
+		<where>
+				<if test="membersId!=null and membersId!=''">
+				a.membersId=#{membersId}
+				</if>
+				<if test="startDate!=null and startDate!='' ">
+				and startDate>#{startDate}
+				</if>
+				<if test="overDate!=null and overDate!='' ">
+				and #{overDate}>overDate
+				</if>
+		</where>
+		order by startDate DESC
+		LIMIT #{form}, #{pageSize};
+	</select>
+	<!--查询会员的租柜记录总数-->
+	<select id="getLockerOrderCount" resultType="int"> 
+		select  count(*) from fitnesssystem.lockerorder a
+		<where>
+				<if test="membersId!=null and membersId!='' ">
+				a.membersId=#{membersId}
+				</if>
+				<if test="startDate!=null and startDate!='' ">
+				and startDate>#{startDate}
+				</if>
+				<if test="overDate!=null and overDate!='' ">
+				and #{overDate}>overDate
+				</if>
+		</where>
+	</select>
+	
+	<!--删除租柜订单-->
+	<delete id="deleteLockerOrder">
+		DELETE 
+			FROM
+			fitnesssystem.lockerorder
+		<where>
+			<if test="lockerOrderId!=null and lockerOrderId!= '' ">
+					lockerOrderId=#{lockerOrderId}
+			</if>		
+			<if test="lockerId!=null and lockerId!= '' ">
+					lockerId=#{lockerId}
+			</if>		
+		</where>
+	</delete>
+	
+	<!--返回所有储物柜信息-->
+	<select id="getLockerList" resultType="Locker">
+		SELECT
+		  lockerId,
+		  lockerType,
+		  employeesId,
+		  state
+		FROM
+		  fitnesssystem.locker
+		<where>
+			<if test="state!=null and state!= '' ">
+			  state=${state}
+			</if>
+		</where>  
+		LIMIT #{form}, #{pageSize};
+	</select>
+	
+	<!--返回储物柜总记录数-->
+	<select id="getLockerCount" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+		  fitnesssystem.locker
+		<where>
+			<if test="state!=null and state!= '' ">
+			  state=${state}
+			</if>
+		</where>  
+	</select>
+	
+	<!--添加储物柜-->
+	<insert id="addLocker">
+	INSERT INTO fitnesssystem.locker (
+	  lockerId,
+	  lockerType,
+	  employeesId,
+	  state
+	)
+	VALUES
+	  (
+	  #{lockerId},
+	  #{lockerType},
+	  #{employeesId},
+	  #{state}
+	  );
+	
+	</insert>
+	
+	<!--删除储物柜-->
+	<delete id="deleteLocker">
+		DELETE
+			FROM
+			  fitnesssystem.locker
+		WHERE lockerId = #{lockerId};
+
+	</delete>
+	
+	<!--修改储物柜状态-->
+	<update id="updateLocker">
+		UPDATE
+		  fitnesssystem.locker
+		SET
+		  state =  #{state}
+		WHERE lockerId =  #{lockerId};
+	</update>
+	
+	<!--返回最近添加的储物柜编号-->
+	<select id="getLockerId" resultType="int">
+		SELECT
+		  MAX(lockerId)
+		FROM
+		  fitnesssystem.locker
+	</select>
+	
+	
+	<!--储物柜出租,添加订单-->
+	<insert id="addLockerOrder">
+	INSERT INTO fitnesssystem.lockerorder (
+	  lockerId,
+	  lockerway,
+	  startDate,
+	  overDate,
+	  employeesId,
+	  membersId
+	)
+	VALUES
+	  (
+	  #{lockerId},
+	  #{lockerway},
+	  #{startDate},
+	  #{overDate},
+	  #{employeesId},
+	  #{membersId}
+	  );
+
+	
+	</insert>
+	
+</mapper>

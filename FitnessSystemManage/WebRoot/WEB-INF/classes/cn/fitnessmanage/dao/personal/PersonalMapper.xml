@@ -1,0 +1,324 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.personal.PersonalMapper">
+	<!--分页返回会员交易信息-->
+	<select id="getPersonalOrderList" resultType="PersonalOrder">
+  		SELECT
+		   a.orderId ,
+		   operatingPeriect ,
+		   transactionType ,
+		   a.price ,
+		   obvious ,
+		   b.name memName,
+		   a.membersId,
+		   a.employeesId,
+		   (SELECT NAME FROM employees WHERE employeesId =(SELECT personalId FROM personaltraniing WHERE orderId=a.orderId)) personalName,
+		   (SELECT b.name FROM employees b WHERE b.employeesId=a.employeesId) AS employeesName ,
+		   a.membersId ,
+		   c.personalId,
+		   c.remainHour,
+		   DATE 
+		FROM
+		   fitnesssystem.personalorder  a INNER JOIN members b ON a.membersId=b.membersId 
+		   INNER JOIN personaltraniing c ON a.orderId=c.orderId  where 1=1 
+		   <if test="membersId!=null and membersId!= '' "> and  a.membersId=#{membersId}  </if>
+		   <if test="employeesId!=null and employeesId!= '' "> and  c.personalId=#{employeesId}  </if>
+		   <if test="name!=null and name!= '' "> and  b.name LIKE CONCAT(CONCAT('%', #{name}), '%')  </if>
+		    ORDER BY date DESC
+		 LIMIT #{form} , #{pageSize};
+	</select>
+	<!--获取会员交易的总记录数-->
+	<select id="getPersonalCount" resultType="int">
+		SELECT count(*) from fitnesssystem.personalorder a INNER JOIN members b ON a.membersId=b.membersId where 1=1 
+		   <if test="membersId!=null and membersId!= '' "> and  a.membersId=#{membersId}  </if>
+		   <if test="employeesId!=null and employeesId!= '' "> and  a.employeesId=#{employeesId}  </if>
+		   <if test="name!=null and name!= '' "> and  b.name=#{name}  </if>
+	</select>
+	
+	<update id="updatePersonalOrder">
+	
+		UPDATE
+		   fitnesssystem . personalorder 
+		SET
+		   operatingPeriect  = #{operatingPeriect},
+		   transactionType  = #{transactionType},
+		   price  = #{price},
+		   obvious  = #{obvious},
+		   employeesId  = #{employeesId},
+		   membersId  = #{membersId},
+		   date  = #{date}
+		WHERE  orderId  = #{orderId};
+	</update>
+	
+	<!--分页返回,会员预约上课列表-->
+	<select id="getPersonalDropList" resultType="PersonalDrop">
+		SELECT
+		  a.dropId ,
+		  a.membersId ,
+		  a.personalId ,
+		  a.sumHour ,
+		  a.date ,
+		  a.state ,
+		  a.common,
+		  b.phone  as memPhone,
+		  b.name  as memName,
+		   (SELECT c.name FROM employees c WHERE c.employeesId=a. personalId ) AS emplName
+		FROM
+		   fitnesssystem.personaldrop  a  INNER JOIN members b  ON a. membersId =b. membersId  
+		   
+		   <where>
+		   		<if test="personalId!=null and personalId!= '' ">and  a. personalId=#{personalId}</if>
+		   		<if test="membersId!=null and membersId!= '' "> and  a. membersId=#{membersId}</if>
+		   		<if test="date1!=null and date1!= '' "> and a.date > #{date1}</if>
+		   		<if test="date2!=null and date2!= '' "> and #{date2} > a.date</if>
+		   </where>
+		   order by a.date DESC
+		LIMIT #{form}, #{pageSize};
+	</select>
+
+	<!--返回所有会员预约上课总数-->
+	<select id="getPersonalDropCount" resultType="int">
+		SELECT  count(*)   FROM  fitnesssystem.personaldrop a 
+		   <where>
+		   		<if test="membersId!=null and membersId!= ''  "> and  a. membersId=#{membersId}</if>
+		   		<if test="date1!=null and date1!=  '' "> and a.date > #{date1}</if>
+		   		<if test="date2!=null and date2!=  '' "> and #{date2} > a.date</if>
+		   </where>		
+	</select>
+	
+	<!--根据会员预约上课编号查找预约信息-->
+	<select id="getPersonalDropInfo" resultType="PersonalDrop">
+		SELECT
+		  a.dropId ,
+		  a.membersId ,
+		  a.personalId ,
+		  a.sumHour ,
+		  a.date,
+		  a.state ,
+		  a.common,
+		  b.phone  as memPhone,
+		  b.name  as memName,
+		   (SELECT c.name FROM employees c WHERE c.employeesId=a. personalId ) AS emplName
+		FROM
+		   fitnesssystem.personaldrop  a  INNER JOIN members b  ON a. membersId =b. membersId  	
+		    <where>
+		   		<if test="dropId!=null and dropId!= '' "> and  a. dropId=#{dropId}</if>
+		   </where>	
+	</select>
+	
+	<!--修改会员预约-->
+	<update id="updatePersonalDrop">
+		UPDATE
+		   fitnesssystem.personaldrop 
+		SET
+		   date  = #{date} ,
+		   common  = #{common} 
+		WHERE  dropId  = #{dropId} ;
+	</update>
+	<!--添加会员预约上课-->
+	<insert id="addPersonalDrop">
+		INSERT INTO  fitnesssystem.personaldrop  (
+		   membersId ,
+		   personalId ,
+		   sumHour ,
+		   date ,
+		   state ,
+		   common ,
+		   orderId
+		)
+		VALUES
+		  (
+		    #{membersId},
+		    #{personalId},
+		    #{sumHour},
+		    #{date},
+		    #{state},
+		    #{common},
+		    #{orderId}
+		  );
+	</insert>
+	
+	<!--删除会员预约-->
+	<delete id="deletePersonalDrop">
+		delete from fitnesssystem.personaldrop where dropId  = #{dropId}
+	</delete>
+	
+	<!--新增私教订单-->
+	<insert id="addPersonalOrder" parameterType="PersonalOrder">
+		<selectKey keyProperty="orderId" order="AFTER" resultType="java.lang.Integer">
+				select LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO  fitnesssystem.personalorder  (
+		   operatingPeriect ,
+		   transactionType ,
+		   price ,
+		   obvious ,
+		   employeesId ,
+		   membersId ,
+		   date )
+		VALUES
+		  ( #{operatingPeriect},
+		  	#{transactionType},
+		  	#{price},
+		  	#{obvious},
+		  	#{employeesId},
+		  	#{membersId},
+		  	#{date});
+	</insert>
+	
+	<!--新增私教订单详情-->
+	<insert id="addPersonalTraniing">
+	INSERT INTO  fitnesssystem.personaltraniing  (
+		   personalId ,
+		   membersId ,
+		   sumHour ,
+		   remainHour ,
+		   comment ,
+		   orderId ,
+		   traniingType 
+		)
+		VALUES
+		  (
+		  #{personalId},
+		  #{membersId},
+		  #{sumHour},
+		  #{remainHour},
+		  #{comment},
+		  #{orderId},
+		  #{traniingType});
+	</insert>
+	
+	<!-- 修改会员订单详情-->
+	<update id="updatePersonalTraniing">
+	UPDATE
+	   fitnesssystem.personaltraniing 
+	SET
+	   personalId  = #{personalId},
+	   membersId  = #{membersId} ,
+	   sumHour  = #{sumHour},
+	   remainHour  = #{remainHour},
+	   comment  = #{comment} ,
+	   orderId  = #{orderId} ,
+	   traniingType  = #{traniingType} 
+	   
+	WHERE  trainingId  = #{trainingId} ;
+	</update>
+	
+	<select id="getpersonalTraniingInfo" resultType="PersonalTraniing">
+		select * from  fitnesssystem.personaltraniing 
+		<where>
+			<if test=" trainingId!=null and trainingId!='' "> trainingId = #{trainingId}</if>
+			<if test=" membersId!=null and  membersId!='' "> and membersId = #{membersId}</if>
+			<if test=" personalId!=null  and  personalId!='' "> and personalId = #{personalId}</if>
+		</where>
+	</select>
+	
+	<!--插入会员退课信息-->
+	<insert id="addPersonalTuike">
+		INSERT INTO  fitnesssystem.personaltuike  (
+		   personalId ,
+		   membersId ,
+		   hour ,
+		   money ,
+		   date ,
+		   traniingId)
+		VALUES
+		  (#{personalId},
+		  	#{membersId},
+		  	#{hour},
+		  	#{money},
+		  	#{date},
+		  	#{traniingId});
+	</insert>
+	
+	<select id="getPersonalLeverList" resultType="PersonalLever">
+		SELECT
+		   a. leverId ,
+		   personalLever ,
+		   personalPrice ,
+		  (SELECT b.name FROM employees b WHERE b.employeesId=a.employeesId)  empName
+		FROM 
+		   fitnesssystem.personallever a
+		   order by personalPrice 
+		LIMIT #{form}, #{pageSize};
+	</select>
+	
+	<select id="getPersonalLeverCount" resultType="int">
+		SELECT  count(*)  FROM  fitnesssystem.personallever
+	</select>
+	
+	<update id="updatePersonalLever">
+	UPDATE
+		   fitnesssystem.personallever 
+		SET
+		   personalLever  = #{personalLever},
+		   personalPrice  = #{personalPrice},
+		   employeesId  = #{employeesId}
+		WHERE  leverId  = #{leverId};
+	</update>
+	
+	<delete id="deletePersoanlLever">
+	DELETE
+		FROM
+		   fitnesssystem.personallever 
+		WHERE  leverId  = #{leverId};
+	</delete>
+	
+	
+	<insert id="addPersonalLever">
+	INSERT INTO  fitnesssystem.personallever  (
+	   personalLever ,
+	   personalPrice ,
+	   employeesId 
+	)
+	VALUES
+	  (
+	 	 #{personalLever},
+	 	 #{personalPrice},
+	 	 #{employeesId});
+	</insert>
+	
+	<!--根据私教等级编号,查找私教信息-->
+	<select id="getpersonalLeverInfo" resultType="PersonalLever">
+		SELECT
+		   a. leverId ,
+		   personalLever ,
+		   personalPrice ,
+		  (SELECT b.name FROM employees b WHERE b.employeesId=a.employeesId)  empName
+		FROM 
+		   fitnesssystem.personallever a 
+		   where leverId=#{leverId}
+	</select>
+	
+	<!--分页返回,私教信息-->
+	<select id="getPersonalInfoList" resultType="Employees">
+		SELECT a.* ,b.personalLever leverName,b.personalPrice  price 
+		FROM fitnesssystem.employees  a  INNER JOIN personallever b ON a.leverId=b.leverId  
+		where typeId=4 OR typeId=7 
+		<if test="employeesId!=null and employeesId!= '' "> and a.employeesId=#{employeesId}</if>
+		<if test="name!=null and name!= ''"> and a.name=#{name}</if>
+		order by price DESC
+		LIMIT #{form}, #{pageSize};
+	</select>
+	
+	<!--返回私教人员总数-->
+	<select id="getPersonalInfoCount" resultType="int">
+	SELECT count(*) FROM fitnesssystem.employees  a 
+		where (typeId=4 OR typeId=7) 
+		<if test="employeesId!=null and employeesId!= '' "> and a.employeesId=#{employeesId}</if>
+		<if test="name!=null and name!= ''"> and a.name=#{name}</if>
+	</select>
+	
+	
+	<!--根据主键查找健身教练信息-->
+	<select id="getPersonalInfo" resultType="Employees">
+		SELECT a.* ,b.personalLever leverName,b.personalPrice  price 
+		FROM fitnesssystem.employees  a  INNER JOIN personallever b ON a.leverId=b.leverId  
+		<if test="employeesId!=null and employeesId!= '' "> and a.employeesId=#{employeesId}</if>		
+	</select>
+	
+	
+	
+</mapper>

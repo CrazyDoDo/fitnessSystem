@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.login.LoginMapper">
+	<!-- 用户登录 -->
+	<select id="userLogin" resultType="Employees">
+		select * from
+		fitnesssystem.employees
+		where username=#{username} and password=#{password}
+	</select>
+
+	<!--搜索用户权限 -->
+	<select id="getPersissions" resultType="Permissions">
+		SELECT permissionsId,employeesTypeId,peizhi,kaika,
+		caozuo,xinxi,huiyuanbiao,gaoji,yewu,kehu,xiaoshou
+		,yeji,sijiao,sijiaoxinxi,sijiaojingli,sijiaobiao,
+		caoke,yuyue,tuandui,chuwugui,shangpin,shuibayeji,yuangong
+		,gangwei,rizhi FROM fitnesssystem.permissions	
+		 WHERE employeesTypeId=#{employeesTypeId}
+	</select>
+
+</mapper>

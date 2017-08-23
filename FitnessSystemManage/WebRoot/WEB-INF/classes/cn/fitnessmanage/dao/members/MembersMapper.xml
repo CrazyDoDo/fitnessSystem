@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.members.MembersMapper">
+	<!--搜索会员信息 -->
+	<select id="getMembersInfo" resultType="Members">
+		SELECT c.* ,
+		(SELECT b.name FROM employees b WHERE b.employeesId=c.employeesId ) as
+		employeesName,
+		(SELECT b.name FROM employees b WHERE b.employeesId=c.coachId ) as coachName
+		FROM fitnesssystem.members c WHERE membersId=#{membersId}
+	</select>
+	<!--搜索会员刷卡信息 -->
+	<select id="getSwipingInfo" resultType="SwipingRecord">
+		SELECT swipingCardId,date,stratDate,overDate,a.membersId,
+		(SELECT c.name FROM members c WHERE c.membersId=a.membersId) as membersName,
+		(SELECT b.name FROM employees b WHERE b.employeesId=a.employeesId ) as
+		employeesName,
+		(SELECT SUM(d.swipingSum) FROM swipingrecord d WHERE d.membersId=a.membersId)
+		as memsum
+		FROM fitnesssystem.swipingrecord a where a.membersId=#{membersId}
+		ORDER BY stratDate DESC
+		LIMIT 0, 5;
+	</select>
+
+	<!--获取会员刷卡总记录数 -->
+	<select id="getMembersSwipingCount" resultType="int">
+		SELECT count(*)
+		from fitnesssystem.swipingrecord a where a.membersId=#{membersId}
+	</select>
+
+	<select id="getSwipingInfoList" resultType="SwipingRecord">
+		SELECT swipingCardId,date,stratDate,overDate,a.membersId,
+		(SELECT c.name FROM members c WHERE c.membersId=a.membersId) as membersName,
+		(SELECT b.name FROM employees b WHERE b.employeesId=a.employeesId ) as
+		employeesName,
+		(SELECT SUM(d.swipingSum) FROM swipingrecord d WHERE d.membersId=a.membersId)
+		as memsum
+		FROM fitnesssystem.swipingrecord a where a.membersId=#{membersId}
+		ORDER BY stratDate DESC
+		LIMIT #{form}, #{pageSize};
+	</select>
+
+	<!--添加会员刷卡信息 -->
+	<insert id="addSwipingInfo">
+		INSERT INTO fitnesssystem.swipingrecord ( date ,
+		stratDate , overDate , membersId , employeesId , swipingSum )
+		VALUES(#{date},#{stratDate},#{overDate},#{membersId},#{employeesId},#{swipingSum});
+	</insert>
+
+	<!--查找最后一位开卡的会员 -->
+	<select id="getLastMembers" resultType="int">
+		SELECT membersId FROM
+		fitnesssystem.members ORDER BY membersId DESC LIMIT 0,1
+	</select>
+
+	<!--会员开卡,添加会员信息 -->
+	<insert id="addMembers">
+		INSERT INTO fitnesssystem.members (
+		membersId , name , sex , phone , image , birthday ,
+		address , weChat , email , professional , iD ,
+		stratDate , stopDate , state , coachId , employeesId , membersCardId )
+		VALUES
+		(#{membersId},#{name},#{sex},#{phone},#{image},#{birthday},
+		#{address},#{weChat},#{email},#{professional},#{iD},#{stratDate},
+		#{stopDate},#{state},#{coachId},#{employeesId},#{membersCardId});
+	</insert>
+
+	<!--所有的会员信息分页显示 -->
+	<select id="getMembersList" resultType="Members">
+		SELECT
+		a.membersId , a.name , a.sex , a.phone ,a.image ,a.birthday ,a.address
+		,a.membersCardId ,
+		a.weChat ,a.email ,a.professional ,a.iD ,a.stratDate , stopDate ,state ,
+		(SELECT NAME FROM employees WHERE employeesId=coachId) AS coachName,
+		(SELECT NAME FROM employees AS b WHERE a.employeesId= b.employeesId)
+		AS employeesName,
+		(SELECT cardName FROM memberscard AS c WHERE c.cardId= a.membersCardId) AS
+		memCardName
+		FROM fitnesssystem.members a
+
+		<if test="membersId!=null">
+			where membersId=#{membersId}
+		</if>
+		ORDER BY stratDate DESC
+		LIMIT #{form} , #{pageSize};
+
+	</select>
+	<select id="getMembersCount" resultType="int">
+		select count(*) from fitnesssystem.members
+		<if test="membersId!=null">
+			where membersId=#{membersId}
+		</if>
+	</select>
+
+
+	<update id="updateMembersInfo">
+		UPDATE fitnesssystem.members
+		SET
+		name = #{name},
+		sex = #{sex},
+		phone = #{phone},
+		image = #{image},
+		birthday = #{birthday},
+		address = #{address},
+		weChat = #{weChat},
+		email = #{email},
+		professional = #{professional},
+		iD = #{iD},
+		state = #{state},
+		coachId = #{coachId},
+		employeesId = #{employeesId}
+
+		WHERE
+		membersId = #{membersId};
+	</update>
+	
+	<update id="updatemembersDate">
+		UPDATE fitnesssystem.members
+		SET  stopDate=#{date}
+		WHERE membersId = #{membersId};
+	</update>
+
+	<!--根据会员的会员卡号删除会员信息 -->
+	<delete id="deleteMembersInfo">
+		DELETE FROM fitnesssystem.members WHERE membersId = #{membersId};
+	</delete>
+	
+	<select id="selectMembersSwipingList" resultType="MembersSwipingCount">
+	   SELECT COUNT(*) as zongSum , DATE as startDate FROM swipingRecord s
+	   <where>
+	   		<if test="hour1 != null and hour2 != null"> HOUR(stratDate) BETWEEN #{hour1} AND #{hour2} </if>
+	   		<if test="date1 != null and date1 != '' "> and s.DATE > #{date1}</if>
+	   		<if test="date2 != null and date2 != '' "> and  #{date2} > s.DATE</if>
+	   </where>
+		GROUP BY s.DATE DESC
+		LIMIT #{form}, #{pageSize};
+	</select>
+	
+	<select id="getSwipingCount" resultType="int">
+		SELECT COUNT(*) FROM swipingRecord s 
+		<where>
+	   		<if test="date1 != null and date1 != '' "> and s.DATE > #{date1}</if>
+	   		<if test="date2 != null and date2 != '' "> and  #{date2} > s.DATE</if>
+	   </where>
+	   GROUP BY s.DATE 
+	</select>
+</mapper>

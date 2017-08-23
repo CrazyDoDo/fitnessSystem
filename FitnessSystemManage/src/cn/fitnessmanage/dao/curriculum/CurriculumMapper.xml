@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.fitnessmanage.dao.curriculum.CurriculumMapper">
+
+	<!--返回操课表-->
+	<select id="getOrderCurrList" resultType="OrderCurriculum">
+	SELECT
+		   orderCurrID ,
+		  (SELECT NAME FROM employees a WHERE employeesId=personalId) personalName,
+		  (SELECT courseName FROM curriculum b WHERE b.courseId = c. courseId ) courseName,
+		   courseId ,
+		   personalId ,
+		   stratdate ,
+		   whatDay ,
+		   state 
+	FROM	   fitnesssystem.ordercurriculum  c
+		   where state=#{state}
+		   GROUP  BY stratDate, whatDay
+		   LIMIT 0, 1000;
+	</select>
+	
+	<select id="getPersonalCurrList" resultType="PersonalCurr">
+		SELECT
+		   personalCurrId ,
+		   personalId ,
+		   courseId ,
+		  (SELECT b.name FROM employees b WHERE b.employeesId=c.personalId) AS personalName,
+		  (SELECT a.courseName FROM  curriculum a WHERE a.courseId=c.courseId) AS courseName,
+		   date 
+		FROM
+		   fitnesssystem.personalcurr  c
+		LIMIT 0, 1000;
+	</select>
+	
+	<update id="updateOrderCurrTime">
+	UPDATE
+	   fitnesssystem.ordercurriculum 
+	SET
+	   courseId  =#{courseId} ,
+	   personalId  =#{personalId} ,
+	   stratdate  =#{stratdate} ,
+	   whatDay  =#{whatDay} ,
+	   state  =#{state}
+	WHERE  orderCurrID  =#{orderCurrID};
+	</update>
+	
+	<!--根据课程Id查找课程相关信息-->
+	<select id="getOrderCurriculumInfo"  resultType="OrderCurriculum">
+  	SELECT
+		   orderCurrID ,
+		   courseId ,
+		  (SELECT b.name FROM employees b WHERE b.employeesId=c.personalId) AS personalName,
+		  (SELECT a.courseName FROM  curriculum a WHERE a.courseId=c.courseId) AS courseName,
+		   (SELECT a.count FROM  curriculum a WHERE a.courseId=c.courseId) AS count,
+		   personalId ,
+		   stratdate ,
+		   whatDay ,
+		   state 
+	FROM	   fitnesssystem.ordercurriculum c
+
+		   where orderCurrID=#{orderCurrID}
+	</select>
+	
+	<!--根据课程编号查找教练,同一节课只能由一位教练代课,courseId为唯一列-->
+	<select id="getPersonalCurr" resultType="PersonalCurr">
+	 SELECT
+		   personalCurrId ,
+		   personalId ,
+		   courseId ,
+		    (SELECT NAME FROM employees WHERE employeesId=personalId) personalName,
+		   DATE 
+		FROM
+		   fitnesssystem.personalcurr
+		WHERE
+			courseId=#{courseId}	
+	</select>
+	
+	<!--添加课程-->
+	<insert id="addOrderPersonal">
+		INSERT INTO  fitnesssystem.ordercurriculum  (
+		   courseId ,
+		   personalId ,
+		   stratdate ,
+		   whatDay ,
+		   state 
+		)
+		VALUES
+		  (
+		   #{courseId},
+		   #{personalId},
+		   #{stratdate},
+		   #{whatDay},
+		   #{state}
+		   );
+	</insert>
+	
+	<delete id="deleteOrderCurr">
+		DELETE
+		FROM
+		   fitnesssystem.ordercurriculum 
+		WHERE  orderCurrID  = #{orderCurrID};
+	</delete>
+
+	<update id="updateCurriculum">
+		UPDATE
+		   fitnesssystem.ordercurriculum 
+		SET
+		   state = #{state1}
+		WHERE  state = #{state2};	
+	</update>
+	
+	<!--返回该课程下的预约总数-->
+	<select id="getMembersOrderCurrCount" resultType="int">
+	SELECT COUNT(*) FROM
+		  fitnesssystem.membersordercurr
+	WHERE orderCurrId = #{orderCurrID}
+	</select>
+	
+	<!--返回该课程下的所有预约会员-->
+	<select id="getMembersOrderCurrList" resultType="MembersOrderCurr">
+	SELECT
+	  membersOrderId,
+	  a.membersId,
+	  orderCurrId,
+	  b.name membersName,
+	  b.phone phone 
+	FROM
+	  fitnesssystem.membersordercurr a INNER JOIN members b ON a.membersId=b.membersId 
+	WHERE a.orderCurrId = #{orderCurrID}
+	</select>
+	
+	<select id="getMembersOrderCurrInfo" resultType="MembersOrderCurr" >
+		SELECT
+	  membersOrderId,
+	  membersId,
+	  orderCurrId
+	FROM
+	  fitnesssystem.membersordercurr
+	WHERE membersId= #{membersId} and orderCurrId=#{orderId}
+	</select>	
+	
+	
+	<!--会员预约上课-->
+	<insert id="addMembersOrderCurr">
+	INSERT INTO fitnesssystem.membersordercurr (
+		  membersId,
+		  orderCurrId
+		)
+		VALUES
+		  (
+		    #{membersId},
+		    #{orderId}
+		  );
+	</insert>
+	
+	<!--删除会员预约上课-->
+	<delete id="deletemembersOrderCurr">
+	DELETE
+		FROM
+		  fitnesssystem.membersordercurr
+		WHERE membersOrderId = #{membersOrderId};
+	</delete>
+	
+	<!--分页返回所有返回课程-->
+	<select id="getCurriculumList" resultType="Curriculum">
+	SELECT
+	  courseId,
+	  courseName,
+	  courseEnglish,
+	  curriculumType,
+	  date,
+	  comment,
+	  count
+	FROM
+	  fitnesssystem.curriculum
+	 order by date DESC
+	LIMIT  #{form} , #{size}
+	</select>
+	
+	<!--返回课程总记录数-->
+	<select id="getCurriculumCount" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+		  fitnesssystem.curriculum
+	</select>
+	
+	
+		<!--添加课程-->
+	<insert id="addCurriculum">
+		INSERT INTO fitnesssystem.curriculum (
+		  courseName,
+		  courseEnglish,
+		  curriculumType,
+		  date,
+		  comment,
+		  count
+		)
+		VALUES
+		  (
+		    #{courseName},
+		    #{courseEnglish},
+		    #{curriculumType},
+		    #{date},
+		    #{comment},
+		    #{count}
+		  );
+	</insert>
+	
+
+	
+	<!--删除课程-->
+	<delete id="deleteCurriculum">
+	DELETE
+		FROM
+		  fitnesssystem.curriculum
+	WHERE courseId = #{courseId}
+	</delete>
+	
+	<!-- 根据Id查询课程 -->
+	<select id="getCurriculumInfo" resultType="Curriculum">
+		SELECT
+		  courseId,
+		  courseName,
+		  courseEnglish,
+		  curriculumType,
+		  date,
+		  comment,
+		  count
+		FROM
+		  fitnesssystem.curriculum WHERE courseId = #{courseId};
+	</select> 
+	
+		<!-- 修改课程-->
+	<update id="updateCurriculumInfo">
+	UPDATE
+	  fitnesssystem.curriculum
+	SET
+	  courseName = #{courseName},
+	  courseEnglish = #{courseEnglish},
+	  comment =  #{comment},
+	  count = #{count}
+	WHERE courseId = #{courseId}
+	</update>
+	
+	<!--分页返回,教练代课信息-->
+	<select id="selectPersonalCurrList" resultType="PersonalCurr">
+		SELECT
+		   personalCurrId ,
+		   personalId ,
+		   courseId ,
+		  (SELECT b.name FROM employees b WHERE b.employeesId=c.personalId) AS personalName,
+		  (SELECT b.phone FROM employees b WHERE b.employeesId=c.personalId) AS  personalPhone,
+		  (SELECT a.courseName FROM  curriculum a WHERE a.courseId=c.courseId) AS courseName,
+		   date 
+		FROM
+		   fitnesssystem.personalcurr  c
+		   order by date DESC 
+		LIMIT #{form}, #{size};
+	
+	</select>
+	
+	<!--教练代课记录总数-->
+	<select id="getPersonalCurrCount" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+		   fitnesssystem.personalcurr
+	</select>
+	
+	<!--删除教练代课信息-->
+	<delete id="deletePersonalCurr">
+		DELETE
+			FROM
+			  fitnesssystem.personalcurr
+		WHERE personalCurrId = #{personalCurrId}
+	</delete>
+	
+	<!--查询没有教练代课的课程 -->
+	<select id="getCurrInfo" resultType="Curriculum">
+		SELECT
+		      * FROM curriculum 
+		WHERE 
+		      courseId NOT IN (SELECT courseId FROM personalCurr)
+	</select>
+	
+	<!--添加教练代课-->
+	<insert id="addPersonalCurr">
+	INSERT INTO fitnesssystem.personalcurr (
+	  personalId,
+	  courseId,
+	  date
+	)
+	VALUES
+	  (
+	    #{personalId},
+	    #{courseId},
+	    #{date}
+	  );
+	</insert>
+	
+	
+	<!--修改教练代课信息-->
+	<update id="updatePersonalCurr">
+	UPDATE
+	  fitnesssystem.personalcurr
+	SET
+	  personalId =#{personalId},
+	  courseId = #{courseId}
+	WHERE personalCurrId = #{personalCurrId};
+	</update>
+</mapper>
